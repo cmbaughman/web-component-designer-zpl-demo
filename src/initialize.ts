@@ -1,7 +1,8 @@
 import { DocumentContainer, PaletteView, PropertyGridWithHeader } from '@node-projects/web-component-designer';
 import { CodeViewMonaco } from '@node-projects/web-component-designer-codeview-monaco';
 import { addZplLanguageToMonaco, createZplDesignerServiceContainer } from '@node-projects/web-component-designer-zpl';
-import { DplLayoutPrinterService } from './DplLayoutPrinterService.js';
+
+import { ZplToDplConverter } from './ZplToDplConverter.js';
 
 async function initialize() {
   await window.customElements.whenDefined("node-projects-document-container");
@@ -31,6 +32,7 @@ async function initialize() {
   const printZplButton = <HTMLButtonElement>document.getElementById('print-zpl-button');
   const printDplButton = <HTMLButtonElement>document.getElementById('print-dpl-button');
 
+  // Event listener for the ZPL button
   printZplButton.addEventListener('click', async () => {
     try {
       printZplButton.disabled = true;
@@ -38,31 +40,33 @@ async function initialize() {
       const zplCode = await documentContainer.codeView.getText();
       console.log("--- Generated ZPL Code ---", zplCode);
       alert("ZPL Code Generated! Check the browser's developer console.");
-    } catch (error) {
+    }
+    catch (error) {
       console.error("Failed to generate ZPL code:", error);
-    } finally {
+    }
+    finally {
       printZplButton.textContent = 'Print ZPL';
       printZplButton.disabled = false;
     }
   });
 
+  // Event listener for the DPL button
   printDplButton.addEventListener('click', async () => {
     try {
       printDplButton.disabled = true;
       printDplButton.textContent = 'Generating...';
+      const zplCode = await documentContainer.codeView.getText();
 
-      const dplService = new DplLayoutPrinterService();
-
-      // --- THE DEFINITIVE FIX ---
-      // Call the .children() method to get the list of items.
-      const designItems = documentContainer.designerView.designerCanvas.rootDesignItem.children();
-      const dplCode = await dplService.print(designItems);
+      const converter = new ZplToDplConverter();
+      const dplCode = converter.convert(zplCode);
 
       console.log("--- Generated DPL Code ---", dplCode);
       alert("DPL Code Generated! Check the browser's developer console.");
-    } catch (error) {
+    }
+    catch (error) {
       console.error("Failed to generate DPL code:", error);
-    } finally {
+    }
+    finally {
       printDplButton.textContent = 'Print DPL';
       printDplButton.disabled = false;
     }
