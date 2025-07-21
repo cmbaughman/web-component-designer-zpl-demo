@@ -1,7 +1,7 @@
-import { DocumentContainer, PaletteView, PropertyGridWithHeader } from '@node-projects/web-component-designer';
-import { CodeViewMonaco } from '@node-projects/web-component-designer-codeview-monaco';
-import { addZplLanguageToMonaco, createZplDesignerServiceContainer } from '@node-projects/web-component-designer-zpl';
-import { ZplToDplConverter } from './ZplToDplConverter.js';
+import { DocumentContainer, PaletteView, PropertyGridWithHeader } from '@node-projects-designer/web-component-designer';
+import { CodeViewMonaco } from '@node-projects-designer/web-component-designer-codeview-monaco';
+import { addZplLanguageToMonaco, createZplDesignerServiceContainer } from '@node-projects-designer/web-component-designer-zpl';
+import { DplLayoutPrinterService } from './DplLayoutPrinterService.js';
 
 async function initialize() {
     await window.customElements.whenDefined("node-projects-document-container");
@@ -16,8 +16,11 @@ async function initialize() {
     documentContainer.style.gridArea = 'c';
     document.getElementById('root').appendChild(documentContainer);
 
+    // Wait for the DocumentContainer and its internal CodeView to be ready
     await documentContainer.ready;
+    await (<CodeViewMonaco>documentContainer.codeView).ready;
 
+    // Configure the code view
     (<CodeViewMonaco>documentContainer.codeView).language = "zplLanguage";
     (<CodeViewMonaco>documentContainer.codeView).theme = "zplTheme";
     addZplLanguageToMonaco();
@@ -46,14 +49,16 @@ async function initialize() {
         }
     });
 
-    // Event listener for your new DPL button
+    // Event listener for the DPL button
     printDplButton.addEventListener('click', async () => {
         try {
             printDplButton.disabled = true;
             printDplButton.textContent = 'Generating...';
-            const zplCode = await documentContainer.codeView.getText();
-            const converter = new ZplToDplConverter();
-            const dplCode = converter.convert(zplCode);
+            
+            // Use the DplLayoutPrinterService to generate code from the visual elements
+            const dplService = new DplLayoutPrinterService();
+            const dplCode = await dplService.print(documentContainer.designerView.designerCanvas.model.designItems);
+
             console.log("--- Generated DPL Code ---", dplCode);
             alert("DPL Code Generated! Check the browser's developer console.");
         } catch (error) {
@@ -65,4 +70,5 @@ async function initialize() {
     });
 }
 
+// Run the initialization function
 initialize();
