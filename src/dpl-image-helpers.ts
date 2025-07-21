@@ -68,3 +68,5 @@ function bitmapToDplHex(bitmap: { data: Uint8Array, width: number, height: numbe
   }
   return hexString;
 }
+
+export { loadImage, imageToMonochromeBitmap, bitmapToDplHex };
